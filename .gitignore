@@ -1,0 +1,45 @@
+# Environment
+.env
+.env.*
+!.env.example
+
+# Database
+hosting.db
+hosting.db-*
+*.sqlite
+*.sqlite3
+
+# Runtime/Build
+node_modules/
+dist/
+build/
+*.log
+npm-debug.log*
+.DS_Store
+
+# WhatsApp Auth
+.wwebjs_auth/
+
+# Runtime caches
+.smoke-runtime-*/
+smoke-runtime-*/
+
+# Payment uploads
+payment-screenshots/
+uploads/
+*.tmp
+*.temp
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Coverage
+coverage/
+.nyc_output/
+
+# Test artifacts
+*.test.js
+*.spec.js
