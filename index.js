@@ -414,7 +414,7 @@ function checkDeploymentCapacity(userId, uploadBytes, callback) {
     db.get(sql, [userId], (err, row) => {
         if (err) return callback(err);
         if (!row) return callback(null, { status: 404, error: 'User not found' });
-        if (row.plan_status !== 'Active' || !row.plan_active) {
+        if (row.plan_status !== 'Active') {
             return callback(null, { status: 403, error: 'An active plan is required to deploy a website' });
         }
         if (row.subscription_expires_at && Date.parse(row.subscription_expires_at) <= Date.now()) {
