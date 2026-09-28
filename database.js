@@ -512,6 +512,54 @@ const db = new sqlite3.Database(dbPath, (err) => {
       db.run(`INSERT OR IGNORE INTO admin_settings (key, value, description) VALUES (?, ?, ?)`, [key, value, description]);
     });
 
+    // --- Developer Plan & Owner Account Setup ---
+    // Hidden plan (is_active=0) with unlimited resources for the developer/owner
+    db.run(`INSERT OR IGNORE INTO plans (name, price, storage_limit_mb, max_websites, duration_months, monthly_price, term_price, is_active)
+            VALUES ('Developer', 0, 999999, 9999, 12, 0, 0, 0)`, function(planErr) {
+      if (planErr && !planErr.message.includes('UNIQUE')) {
+        console.error('Developer plan seed error:', planErr.message);
+        return;
+      }
+      db.get(`SELECT id FROM plans WHERE name = 'Developer' LIMIT 1`, (err, devPlan) => {
+        if (err || !devPlan) return;
+        const devEmail = 'piyushassudani96@gmail.com';
+        const devPassword = 'piyushassudani@300609';
+        const bcrypt = require('bcrypt');
+        bcrypt.hash(devPassword, 10).then(hash => {
+          // Check if account exists
+          db.get(`SELECT id FROM users WHERE email = ?`, [devEmail], (userErr, existingUser) => {
+            if (userErr) return;
+            if (existingUser) {
+              // Update existing account to developer
+              db.run(`UPDATE users SET
+                password_hash = ?,
+                plan_id = ?,
+                plan_status = 'Active',
+                subscription_expires_at = '2099-12-31T23:59:59.000Z',
+                subscription_max_websites = 9999,
+                terms_accepted_at = COALESCE(terms_accepted_at, datetime('now')),
+                privacy_acknowledged_at = COALESCE(privacy_acknowledged_at, datetime('now'))
+                WHERE email = ?`, [hash, devPlan.id, devEmail], function(updateErr) {
+                if (updateErr) console.error('Developer account update error:', updateErr.message);
+                else console.log('Developer account ready:', devEmail);
+              });
+            } else {
+              // Create fresh developer account
+              db.run(`INSERT INTO users (name, email, whatsapp_number, password_hash, plan_id, plan_status,
+                      subscription_expires_at, subscription_max_websites, customer_type,
+                      terms_accepted_at, privacy_acknowledged_at)
+                      VALUES ('Piyush Assudani', ?, '+919413879444', ?, ?, 'Active',
+                      '2099-12-31T23:59:59.000Z', 9999, 'Customer',
+                      datetime('now'), datetime('now'))`, [devEmail, hash, devPlan.id], function(insertErr) {
+                if (insertErr) console.error('Developer account creation error:', insertErr.message);
+                else console.log('Developer account created:', devEmail);
+              });
+            }
+          });
+        }).catch(err => console.error('Developer account bcrypt error:', err.message));
+      });
+    });
+
   });
 });
 
